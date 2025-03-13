@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LatinLiberty Score</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #003366;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #003366;
+        }
+        .dark-mode {
+            background-color: #222;
+            color: white;
+        }
+        .dark-mode .container {
+            background-color: #333;
+        }
+        button {
+            background-color: #003366;
+            color: white;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+        }
+        .floating-box {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+        }
+        .close-btn {
+            background: red;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    
+        <button onclick="window.location.href='signup.html'" style="float: right; margin-top: 10px; background: #008CBA; color: white; padding: 10px; border: none; cursor: pointer;">Seja Membro</button>
+        <p>Monitorando a liberdade na América Latina</p>
+        <button onclick="toggleDarkMode()">Alternar Modo</button>
+    </header>
+    
+    <div class="container">
+        <h2>Selecione um país</h2>
+        <select id="countrySelect" onchange="updateCharts()">
+            <option value="brazil">Brasil</option>
+            <option value="argentina">Argentina</option>
+            <option value="chile">Chile</option>
+            <option value="venezuela">Venezuela</option>
+            <option value="mexico">México</option>
+            <option value="peru">Peru</option>
+            <option value="colombia">Colômbia</option>
+            <option value="uruguay">Uruguai</option>
+            <option value="paraguay">Paraguai</option>
+            <option value="bolivia">Bolívia</option>
+        </select>
+    </div>
+    
+    <div class="container">
+        <h2>Gráfico de Liberdade vs. Corrupção (desde 2000)</h2>
+        <canvas id="freedomChart"></canvas>
+    </div>
+    
+    <div class="container">
+        <h2>Gráfico de Risco de Ditadura (desde 2000)</h2>
+        <canvas id="dictatorshipChart"></canvas>
+    </div>
+    
+    <div id="cryptoBox" class="floating-box">
+        <h3>Cotação das 5 Principais Criptomoedas</h3>
+        <ul id="cryptoPrices"></ul>
+        <button class="close-btn" onclick="document.getElementById('cryptoBox').style.display='none'">Fechar</button>
+    </div>
+    
+    <script>
+        function toggleDarkMode() {
+            document.body.classList.toggle("dark-mode");
+        }
+
+        const countryData = {
+            brazil: [50, 70, 60],
+            argentina: [55, 65, 50],
+            chile: [75, 40, 20],
+            venezuela: [15, 95, 98],
+            mexico: [50, 70, 40],
+            peru: [60, 50, 30],
+            colombia: [58, 55, 35],
+            uruguay: [80, 30, 10],
+            paraguay: [65, 45, 25],
+            bolivia: [40, 70, 50]
+        };
+
+        function updateCharts() {
+            const selectedCountry = document.getElementById('countrySelect').value;
+            createCharts(selectedCountry);
+        }
+
+        function createCharts(country) {
+            const ctx1 = document.getElementById('freedomChart').getContext('2d');
+            const ctx2 = document.getElementById('dictatorshipChart').getContext('2d');
+            
+            if (window.freedomChart) window.freedomChart.destroy();
+            if (window.dictatorshipChart) window.dictatorshipChart.destroy();
+            
+            window.freedomChart = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: ['Liberdade (%)', 'Corrupção (%)', 'Risco de Ditadura (%)'],
+                    datasets: [{
+                        label: `Dados de ${country.toUpperCase()}`,
+                        data: countryData[country],
+                        backgroundColor: ['green', 'red', 'orange']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) { return value + "%"; }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function fetchCryptoPrices() {
+            axios.get('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,binancecoin,cardano,solana&vs_currencies=usd')
+                .then(response => {
+                    const prices = response.data;
+                    const cryptoList = document.getElementById('cryptoPrices');
+                    cryptoList.innerHTML = '';
+                    Object.keys(prices).forEach(crypto => {
+                        const li = document.createElement('li');
+                        li.textContent = `${crypto.toUpperCase()}: $${prices[crypto].usd}`;
+                        cryptoList.appendChild(li);
+                    });
+                })
+                .catch(error => console.error('Erro ao buscar preços das criptomoedas:', error));
+        }
+
+        fetchCryptoPrices();
+        setInterval(fetchCryptoPrices, 60000);
+        createCharts('brazil');
+    </script>
+</body>
+</html>
